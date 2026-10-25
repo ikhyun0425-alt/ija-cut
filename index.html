@@ -1,39 +1,39 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>이자 컷(Cut) - 직장인 대출 상환 & 빚 탈출 계산기</title>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>Cut - Worker Loan Repayment & Debt Escape Calculator</title>
   <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --card-sub: #334155;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --danger: #f43f5e;
-      --success: #10b981;
-      --accent: #3b82f6;
-      --warning: #f59e0b;
+ :root {
+ --bg: #0f172a;
+ --card: #1e293b;
+ --card-sub: #334155;
+ --text: #f8fafc;
+ --muted: #94a3b8;
+ --danger: #f43f5e;
+ --success: #10b981;
+ --accent: #3b82f6;
+ --warning: #f59e0b;
     }
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", sans-serif; }
-    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; }
-    .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+ * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", sans-serif; }
+ body { margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; }
+ .container { max-width: 480px; margin: 0 auto; padding: 16px; }
     
-    /* 상단 헤더 & 경고판 */
-    .header { text-align: center; padding: 10px 0 16px; }
-    .header h1 { margin: 0; font-size: 22px; letter-spacing: -0.5px; }
-    .header p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
-    .alert-box {
-      background: linear-gradient(135deg, #4c0519, #881337);
-      border: 1px solid var(--danger);
-      border-radius: 14px;
-      padding: 16px;
-      text-align: center;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25);
+    /* Top Header & Warning Panel */
+ .header { text-align: center; padding: 10px 0 16px; }
+ .header h1 { margin: 0; font-size: 22px; letter-spacing: -0.5px; }
+ .header p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+ .alert-box {
+ background: linear-gradient(135deg, #4c0519, #881337);
+ border: 1px solid var(--danger);
+ border-radius: 14px;
+ padding: 16px;
+ text-align: center;
+ margin-bottom: 16px;
+ box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25);
     }
-    .alert-box .sub { font-size: 13px; color: #fecdd3; }
+ .alert-box .sub { font-size: 13px; color: #fecdd3; }
     .alert-box .daily-loss { font-size: 24px; font-weight: 800; color: #fff; margin: 6px 0; }
     .alert-box .daily-loss span { color: #fda4af; text-decoration: underline; }
 
