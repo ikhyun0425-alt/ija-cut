@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>이자 컷(Cut) - 직장인 대출 상환 & 빚 탈출 계산기</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-sub: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --danger: #f43f5e;
+      --success: #10b981;
+      --accent: #3b82f6;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", sans-serif; }
+    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; }
+    .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+    
+    /* 상단 헤더 & 경고판 */
+    .header { text-align: center; padding: 10px 0 16px; }
+    .header h1 { margin: 0; font-size: 22px; letter-spacing: -0.5px; }
+    .header p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+    .alert-box {
+      background: linear-gradient(135deg, #4c0519, #881337);
+      border: 1px solid var(--danger);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25);
+    }
+    .alert-box .sub { font-size: 13px; color: #fecdd3; }
+    .alert-box .daily-loss { font-size: 24px; font-weight: 800; color: #fff; margin: 6px 0; }
+    .alert-box .daily-loss span { color: #fda4af; text-decoration: underline; }
+
+    /* 공통 카드 스타일 */
+    .card { background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid #334155; }
+    .card-title { font-size: 16px; font-weight: 700; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: center; }
+    
+    /* 대출 입력 아이템 */
+    .loan-item { background: var(--bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid #334155; }
+    .loan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .chip-group { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .chip { background: var(--card-sub); color: var(--text); border: none; padding: 6px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; }
+    .chip.active { background: var(--accent); font-weight: 700; }
+    .input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .input-group { flex: 1; }
+    .input-group label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .input-group input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #475569; background: var(--card); color: #fff; font-size: 14px; font-weight: 700; }
+    .quick-btns { display: flex; gap: 6px; }
+    .q-btn { flex: 1; background: #1e293b; border: 1px solid #475569; color: #cbd5e1; padding: 6px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+    .del-btn { background: transparent; border: none; color: var(--danger); font-size: 12px; cursor: pointer; }
+    .add-loan-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px dashed var(--muted); background: transparent; color: var(--text); font-size: 13px; cursor: pointer; }
+
+    /* 슬라이더 */
+    .slider-val { font-size: 20px; font-weight: 800; color: var(--success); text-align: right; }
+    input[type="range"] { width: 100%; margin: 10px 0; accent-color: var(--success); }
+
+    /* 메인 액션 버튼 */
+    .main-btn {
+      width: 100%; padding: 16px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff; font-size: 16px; font-weight: 800; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+      margin-bottom: 12px;
+    }
+
+    /* 광고 자리 표시용 박스 */
+    .ad-banner {
+      background: #090d16; border: 1px dashed #475569; border-radius: 8px;
+      padding: 12px; text-align: center; color: var(--muted); font-size: 12px; margin: 12px 0;
+    }
+    .ad-fixed-bottom {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #090d16; border-top: 1px solid #334155;
+      padding: 10px; text-align: center; font-size: 12px; color: var(--muted); z-index: 50;
+    }
+
+    /* 2화면: 보상형 광고 브릿지 팝업 */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82);
+      z-index: 100; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-box {
+      background: var(--card); border: 1px solid var(--accent); border-radius: 16px;
+      max-width: 400px; width: 100%; padding: 20px; text-align: center;
+    }
+    .blur-preview {
+      background: var(--bg); border-radius: 10px; padding: 14px; margin: 14px 0;
+      border: 1px solid #334155;
+    }
+    .blur-text { filter: blur(5px); user-select: none; color: var(--success); font-weight: 800; }
+    .ad-watch-btn {
+      width: 100%; padding: 14px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff; font-size: 15px; font-weight: 800; cursor: pointer;
+    }
+
+    /* 3화면: 프리미엄 결과 리포트 */
+    #screen3 { display: none; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .stat-box { background: var(--bg); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid #334155; }
+    .stat-box .label { font-size: 11px; color: var(--muted); }
+    .stat-box .val { font-size: 18px; font-weight: 800; color: var(--success); margin-top: 4px; }
+    .strategy-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .s-tab { flex: 1; padding: 10px; border-radius: 8px; background: var(--bg); color: var(--muted); border: 1px solid #334155; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .s-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .timeline-step { background: var(--bg); padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid var(--success); font-size: 13px; line-height: 1.5; }
+    
+    /* 확장 모듈 체크박스 */
+    .check-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #334155; font-size: 13px; cursor: pointer; }
+    .check-item input { width: 18px; height: 18px; accent-color: var(--success); }
+    .result-badge { padding: 12px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); margin-top: 12px; font-size: 13px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 상단 타이틀 -->
+  <div class="header">
+    <h1>✂️ 이자 컷 (Interest Cut)</h1>
+    <p>직장인 대출 최적 상환 순서 & 빚 탈출 시뮬레이터</p>
+  </div>
+
+  <!-- 1화면: 상단 하루 이자 경고판 -->
+  <div class="alert-box">
+    <div class="sub">지금 숨만 쉬어도 하루에 빠져나가는 생돈</div>
+    <div class="daily-loss">일 <span id="dailyInterestTxt">0</span> 원 증발 중</div>
+    <div class="sub" id="monthlyInterestTxt">월 이자만 약 0원 납부 중</div>
+  </div>
+
+  <!-- 1화면: 대출 입력 카드 -->
+  <div class="card">
+    <div class="card-title">
+      <span>1. 보유 중인 대출 입력</span>
+      <span style="font-size:12px; color:var(--muted);">터치로 빠르게 입력</span>
+    </div>
+    <div id="loanList"></div>
+    <button class="add-loan-btn" onclick="addLoan()">+ 대출 건수 추가하기 (최대 5건)</button>
+  </div>
+
+  <!-- 1화면: 월 여윳돈 설정 -->
+  <div class="card">
+    <div class="card-title">
+      <span>2. 매월 원금 타격용 추가 여윳돈</span>
+      <span class="slider-val" id="extraBudgetTxt">30만 원</span>
+    </div>
+    <p style="font-size:12px; color:var(--muted); margin-top:0;">매달 숨만 쉬고 나가는 이자 외에, 원금을 깎는 데 추가로 쓸 수 있는 금액을 밀어주세요.</p>
+    <input type="range" id="extraBudgetSlider" min="5" max="200" step="5" value="30" oninput="updateExtraBudget(this.value)">
+    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted);">
+      <span>월 5만 원</span>
+      <span>월 100만 원</span>
+      <span>월 200만 원</span>
+    </div>
+  </div>
+
+  <!-- 1화면 하단 액션 버튼 -->
+  <button class="main-btn" onclick="openAdBridge()">🔥 내 여윳돈으로 이자 아끼는 최적 순서 뽑기</button>
+
+  <!-- 3화면: 프리미엄 분석 리포트 (광고 시청 후 열림) -->
+  <div id="screen3">
+    <div class="card" style="border-color: var(--success);">
+      <div class="card-title">
+        <span>📊 최적 상환 전략 비교 리포트</span>
+        <span style="font-size:11px; color:var(--success);">잠금 해제 완료</span>
+      </div>
+
+      <div class="strategy-tabs">
+        <button class="s-tab active" id="tabAvalanche" onclick="switchStrategy('avalanche')">고금리 타격법 (이자절감 1위)</button>
+        <button class="s-tab" id="tabSnowball" onclick="switchStrategy('snowball')">소액 격파법 (성취감 1위)</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="stat-box">
+          <div class="label">총 완납까지 걸리는 기간</div>
+          <div class="val" id="resMonths">0개월</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">완납 시까지 총 납부 이자</div>
+          <div class="val" id="resTotalInterest">0원</div>
+        </div>
+      </div>
+
+      <div id="strategyDesc" style="font-size:12px; color:var(--muted); margin-bottom:10px;"></div>
+      <div id="timelineBox"></div>
+
+      <button class="q-btn" style="width:100%; padding:12px; margin-top:8px; border-color:var(--warning); color:var(--warning); font-weight:700;" onclick="boostExtra10()">
+        💡 만약 커피·배달 줄여서 월 10만 원만 더 갚으면 언제 끝날까? (즉시 재계산)
+      </button>
+    </div>
+
+    <!-- 수익 포인트: 결과 직하단 네이티브 광고 자리 -->
+    <div class="ad-banner">
+      [고단가 금융 네이티브 광고 영역]<br>내 신용점수 영향 없이 1금융권 최저금리 갈아타기 한도 조회
+    </div>
+
+    <!-- 확장 3-1: 금리인하요구권 자가진단 -->
+    <div class="card">
+      <div class="card-title"><span>📋 [확장 1] 10초 금리인하요구권 자가진단</span></div>
+      <p style="font-size:12px; color:var(--muted); margin-top:0;">대출 받은 이후 아래 항목 중 해당되는 것을 체크해 보세요.</p>
+      <label class="check-item"><input type="checkbox" class="rate-chk" onchange="calcRateCut()"> 직장 이직 또는 사내 승진(직급 상승)</label>
+      <label class="check-item"><input type="checkbox" class="rate-chk" onchange="calcRateCut()"> 연봉(소득) 10% 이상 증가</label>
+      <label class="check-item"><input type="checkbox" class="rate-chk" onchange="calcRateCut()"> 신용점수 30점 이상 상승</label>
+      <label class="check-item"><input type="checkbox" class="rate-chk" onchange="calcRateCut()"> 기존 대출 원금의 30% 이상 상환 완료</label>
+      <div class="result-badge" id="rateCutResult">
+        위 항목을 하나라도 체크하시면, 은행에 금리 0.5%p 인하 요구 시 아낄 수 있는 생돈을 즉시 계산합니다.
+      </div>
+    </div>
+
+    <!-- 확장 3-2: 대환대출 중도상환수수료 손익분기 계산기 -->
+    <div class="card">
+      <div class="card-title"><span>⚖️ [확장 2] 대환대출(갈아타기) 손익계산기</span></div>
+      <p style="font-size:12px; color:var(--muted); margin-top:0;">가장 비싼 고금리 대출을 갈아탈 때, 중도상환수수료를 내고도 이득인지 판정합니다.</p>
+      <div class="input-row">
+        <div class="input-group">
+          <label>갈아탈 목표 금리 (연 %)</label>
+          <input type="number" id="refiTargetRate" value="5.5" step="0.1" oninput="calcRefi()">
+        </div>
+        <div class="input-group">
+          <label>중도상환수수료율 (%)</label>
+          <input type="number" id="refiFeeRate" value="1.0" step="0.1" oninput="calcRefi()">
+        </div>
+      </div>
+      <div class="result-badge" id="refiResult"></div>
+    </div>
+
+    <!-- 내 폰 저장 & 월급날 상환 도장 -->
+    <div class="card">
+      <div class="card-title"><span>💾 내 기기 플랜 보관함 (로그인 불필요)</span></div>
+      <div style="display:flex; gap:8px;">
+        <button class="q-btn" style="padding:12px; font-weight:700; color:#fff; background:var(--accent);" onclick="savePlanToDevice()">현재 플랜 내 기기에 저장</button>
+        <button class="q-btn" style="padding:12px; font-weight:700; color:#fff; background:var(--success);" onclick="stampPayday()">이번 달 상환 도장 찍기 ✅</button>
+      </div>
+      <p id="saveStatusTxt" style="font-size:12px; color:var(--muted); margin:10px 0 0; text-align:center;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- 2화면: 보상형 광고 브릿지 모달 -->
+<div class="modal-overlay" id="adModal">
+  <div class="modal-box">
+    <h3 style="margin:0 0 8px;">분석 완료! 상환 순서만 바꿔도<br>이자를 대폭 아낄 수 있습니다</h3>
+    <p style="font-size:12px; color:var(--muted); margin:0;">회원가입 없이 짧은 스폰서 광고 확인 후 즉시 전체 리포트가 열립니다.</p>
+    <div class="blur-preview">
+      <div style="font-size:12px; color:var(--muted);">예상 완납 단축 및 절감액 미리보기</div>
+      <div style="font-size:18px; margin-top:6px;">총 이자 <span class="blur-text">1,840,000원</span> 절약</div>
+      <div style="font-size:14px; margin-top:4px;">완납 시기 <span class="blur-text">14개월</span> 단축 가능</div>
+    </div>
+    <button class="ad-watch-btn" id="adWatchBtn" onclick="startRewardAd()">🎬 스폰서 광고(3초 테스트) 보고 결과 즉시 열기</button>
+  </div>
+</div>
+
+<!-- 하단 고정 배너 광고 영역 -->
+<div class="ad-fixed-bottom">
+  [하단 고정 배너 광고 영역 - 1,000회 노출당 약 1,000원 수익]
+</div>
+
+<script>
+  let loans = [
+    { name: '카드론/현금서비스', balance: 300, rate: 14.5 },
+    { name: '마이너스통장', balance: 700, rate: 7.2 },
+    { name: '신용대출', balance: 1500, rate: 5.4 }
+  ];
+  let extraBudget = 30;
+  let currentStrategy = 'avalanche';
+  let stampCount = 0;
+
+  function init() {
+    const saved = localStorage.getItem('ijacut_data');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      loans = parsed.loans || loans;
+      extraBudget = parsed.extraBudget || 30;
+      stampCount = parsed.stampCount || 0;
+      document.getElementById('extraBudgetSlider').value = extraBudget;
+      document.getElementById('extraBudgetTxt').innerText = extraBudget + '만 원';
+      document.getElementById('saveStatusTxt').innerText = `저장된 플랜 불러옴 | 누적 상환 성공 도장: ${stampCount}회 🔥`;
+    }
+    renderLoans();
+    updateDailyAlert();
+  }
+
+  function renderLoans() {
+    const box = document.getElementById('loanList');
+    box.innerHTML = '';
+    const types = ['카드론/현금서비스', '마이너스통장', '신용대출', '주택/전세대출'];
+    loans.forEach((l, idx) => {
+      const chips = types.map(t => `<button class="chip ${l.name===t?'active':''}" onclick="setLoanName(${idx}, '${t}')">${t}</button>`).join('');
+      box.innerHTML += `
+        <div class="loan-item">
+          <div class="loan-header">
+            <strong style="font-size:13px;">대출 #${idx+1} (${l.name})</strong>
+            ${loans.length > 1 ? `<button class="del-btn" onclick="removeLoan(${idx})">삭제 ✕</button>` : ''}
+          </div>
+          <div class="chip-group">${chips}</div>
+          <div class="input-row">
+            <div class="input-group">
+              <label>남은 원금 (만 원)</label>
+              <input type="number" value="${l.balance}" oninput="updateLoanVal(${idx}, 'balance', this.value)">
+            </div>
+            <div class="input-group">
+              <label>연 이자율 (%)</label>
+              <input type="number" step="0.1" value="${l.rate}" oninput="updateLoanVal(${idx}, 'rate', this.value)">
+            </div>
+          </div>
+          <div class="quick-btns">
+            <button class="q-btn" onclick="addBalance(${idx}, 100)">+100만</button>
+            <button class="q-btn" onclick="addBalance(${idx}, 500)">+500만</button>
+            <button class="q-btn" onclick="addBalance(${idx}, -100)">-100만</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  function setLoanName(idx, name) { loans[idx].name = name; renderLoans(); }
+  function updateLoanVal(idx, key, val) {
+    loans[idx][key] = Math.max(0, parseFloat(val) || 0);
+    updateDailyAlert();
+  }
+  function addBalance(idx, delta) {
+    loans[idx].balance = Math.max(0, loans[idx].balance + delta);
+    renderLoans();
+    updateDailyAlert();
+  }
+  function addLoan() {
+    if (loans.length >= 5) return alert('대출은 최대 5건까지 입력할 수 있습니다.');
+    loans.push({ name: '신용대출', balance: 500, rate: 6.5 });
+    renderLoans();
+    updateDailyAlert();
+  }
+  function removeLoan(idx) {
+    loans.splice(idx, 1);
+    renderLoans();
+    updateDailyAlert();
+  }
+  function updateExtraBudget(val) {
+    extraBudget = parseInt(val, 10);
+    document.getElementById('extraBudgetTxt').innerText = extraBudget + '만 원';
+  }
+
+  function updateDailyAlert() {
+    let annualInterestMan = 0;
+    loans.forEach(l => { annualInterestMan += l.balance * (l.rate / 100); });
+    const dailyWon = Math.round((annualInterestMan * 10000) / 365);
+    const monthlyWon = Math.round((annualInterestMan * 10000) / 12);
+    document.getElementById('dailyInterestTxt').innerText = dailyWon.toLocaleString();
+    document.getElementById('monthlyInterestTxt').innerText = `월 이자만 약 ${monthlyWon.toLocaleString()}원 납부 중`;
+  }
+
+  function openAdBridge() {
+    document.getElementById('adModal').style.display = 'flex';
+  }
+
+  function startRewardAd() {
+    const btn = document.getElementById('adWatchBtn');
+    let sec = 3;
+    btn.disabled = true;
+    const timer = setInterval(() => {
+      btn.innerText = `스폰서 광고 시청 중... (${sec}초 후 열림)`;
+      sec--;
+      if (sec < 0) {
+        clearInterval(timer);
+        btn.disabled = false;
+        btn.innerText = '🎬 스폰서 광고 보고 결과 즉시 열기';
+        document.getElementById('adModal').style.display = 'none';
+        document.getElementById('screen3').style.display = 'block';
+        runSimulation();
+        calcRateCut();
+        calcRefi();
+        document.getElementById('screen3').scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 1000);
+  }
+
+  function switchStrategy(type) {
+    currentStrategy = type;
+    document.getElementById('tabAvalanche').classList.toggle('active', type === 'avalanche');
+    document.getElementById('tabSnowball').classList.toggle('active', type === 'snowball');
+    runSimulation();
+  }
+
+  function runSimulation() {
+    let simLoans = loans.map(l => ({ ...l, rem: l.balance * 10000 })).filter(l => l.rem > 0);
+    if (currentStrategy === 'avalanche') {
+      simLoans.sort((a, b) => b.rate - a.rate);
+      document.getElementById('strategyDesc').innerText = '🔥 금리가 가장 높은 대출에 여윳돈을 100% 집중 투하하여 총이자를 수학적으로 가장 많이 아끼는 순서입니다.';
+    } else {
+      simLoans.sort((a, b) => a.rem - b.rem);
+      document.getElementById('strategyDesc').innerText = '⚡ 잔액이 가장 적은 대출부터 빠르게 지워 대출 건수를 줄이고 성취감을 높이는 순서입니다.';
+    }
+
+    let months = 0;
+    let totalInterest = 0;
+    const monthlyExtraWon = extraBudget * 10000;
+    let payoffLog = [];
+
+    while (simLoans.some(l => l.rem > 0) && months < 360) {
+      months++;
+      let availablePrincipal = monthlyExtraWon;
+      simLoans.forEach(l => {
+        if (l.rem > 0) {
+          totalInterest += l.rem * (l.rate / 100 / 12);
+        }
+      });
+      for (let i = 0; i < simLoans.length; i++) {
+        let l = simLoans[i];
+        if (l.rem <= 0) continue;
+        if (l.rem <= availablePrincipal) {
+          availablePrincipal -= l.rem;
+          l.rem = 0;
+          payoffLog.push({ name: l.name, rate: l.rate, month: months });
+        } else {
+          l.rem -= availablePrincipal;
+          availablePrincipal = 0;
+          break;
+        }
+      }
+    }
+
+    document.getElementById('resMonths').innerText = `${months}개월 (${(months/12).toFixed(1)}년)`;
+    document.getElementById('resTotalInterest').innerText = `${Math.round(totalInterest).toLocaleString()}원`;
+
+    const tBox = document.getElementById('timelineBox');
+    tBox.innerHTML = payoffLog.map((p, idx) => `
+      <div class="timeline-step">
+        <strong>[${idx+1}순위 타격 완료] ${p.name} (연 ${p.rate}%)</strong><br>
+        👉 여윳돈 집중 투하로 <strong>${p.month}개월 차</strong>에 완전 소멸! 이후 남는 금액을 다음 대출로 합산 타격합니다.
+      </div>
+    `).join('');
+  }
+
+  function boostExtra10() {
+    extraBudget = Math.min(200, extraBudget + 10);
+    document.getElementById('extraBudgetSlider').value = extraBudget;
+    document.getElementById('extraBudgetTxt').innerText = extraBudget + '만 원';
+    runSimulation();
+  }
+
+  function calcRateCut() {
+    const chks = document.querySelectorAll('.rate-chk:checked').length;
+    const totalBalWon = loans.reduce((acc, l) => acc + l.balance * 10000, 0);
+    const savedYearly = Math.round(totalBalWon * 0.005);
+    const box = document.getElementById('rateCutResult');
+    if (chks > 0) {
+      box.innerHTML = `🟢 <strong>[승인 가능성 높음! (${chks}개 항목 해당)]</strong><br>지금 거래 은행 앱에서 금리인하요구권을 신청해 금리가 딱 <strong>0.5%p만 내려가도</strong> 1년에 약 <strong>${savedYearly.toLocaleString()}원</strong>의 생돈을 공짜로 아낍니다!`;
+    } else {
+      box.innerHTML = `위 항목 중 1개만 해당되어도 연 약 <strong>${savedYearly.toLocaleString()}원</strong>(0.5%p 인하 기준)을 아낄 수 있습니다.`;
+    }
+  }
+
+ function calcRefi() {
+ if (loans.length === 0) return;
+ const topLoan = [...loans].sort((a, b) => b.rate - a.rate)[0];
+ const targetRate = parseFloat(document.getElementById('refiTargetRate').value) || 5.0;
+ const feeRate = parseFloat(document.getElementById('refiFeeRate').value) || 1.0;
+ const balWon = topLoan.balance * 10000;
+ const annualSaved = Math.round(balWon * ((topLoan.rate - targetRate) / 100));
+ const feeWon = Math.round(balWon * (feeRate / 100));
+ const netProfit = annualSaved - feeWon;
+ const box = document.getElementById('refiResult');
+
+ if (netProfit > 0) {
+ const breakEvenMonths = (feeWon / (annualSaved / 12)).toFixed(1);
+ box.innerHTML = '🔥 <strong> [Transfer unconditionally!]! 1 year +${netProfit.toLocaleString()} gain]</strong><br>If you transfer the most expensive '${topLoan.name } (${topLoan.rate}%)' to ${targetRate}%, you will pay a prepayment fee (${feeWon.toLocaleString()}) and <strong> You will withdraw the fee in just ${breakEvenMonths} months and enter the </strong> gain section!`;
+ } else {
+ box.innerHTML = '⚠️ <strong>[maintenance recommended]</strong> The prepayment fee (${feeWon.toLocaleString()}) burden is greater or similar to the interest rate difference.';
+ }
+ }
+
+ function savePlanToDevice() {
+ localStorage.setItem('ijacut_data', JSON.stringify({ loans, extraBudget, stampCount }));
+ document.getElementById('saveStatusTxt').innerText = '✅ Safely stored on my tablet/smartphone! (Cumulative stamp: ${stampCount} times)`;
+ }
+
+ function stampPayday() {
+ stampCount++;
+ savePlanToDevice();
+ document.getElementById('saveStatusTxt').innerText = '🎉 Repayment completed this month! Accumulated ${stampCount} Stamped Escape Stamp!`;
+ }
+
+ init();
+</script>
+</body>
+</html>
